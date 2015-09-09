@@ -18,22 +18,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Reduction_1\vector_filter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Reduction_1\vertical_filtering_main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Reduction_1\io_bmp\io_bmp.cpp">
       <Filter>io_bmp</Filter>
     </ClCompile>
+    <ClCompile Include="Upsampling_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector_filter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Reduction_1\aligned_image_comps.h">
-      <Filter>io_bmp</Filter>
-    </ClInclude>
     <ClInclude Include="..\Reduction_1\io_bmp\io_bmp.h">
       <Filter>io_bmp</Filter>
+    </ClInclude>
+    <ClInclude Include="aligned_image_comps.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

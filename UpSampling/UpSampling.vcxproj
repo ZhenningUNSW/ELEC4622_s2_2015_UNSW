@@ -77,6 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>C:\ZhenningJiang\bin</OutDir>
+    <IncludePath>C:\ZhenningJiang\project\Reduction_Project_1\Reduction_1\Reduction_1\io_bmp;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -143,12 +145,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Reduction_1\io_bmp\io_bmp.cpp" />
-    <ClCompile Include="..\Reduction_1\vector_filter.cpp" />
-    <ClCompile Include="..\Reduction_1\vertical_filtering_main.cpp" />
+    <ClCompile Include="Upsampling_main.cpp" />
+    <ClCompile Include="vector_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Reduction_1\aligned_image_comps.h" />
     <ClInclude Include="..\Reduction_1\io_bmp\io_bmp.h" />
+    <ClInclude Include="aligned_image_comps.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
