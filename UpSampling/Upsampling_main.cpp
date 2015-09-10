@@ -50,7 +50,7 @@ void my_aligned_image_comp::perform_boundary_extension()
 /*                        filter coefficient generation                      */
 /*****************************************************************************/
 
-const void filter_generation(float *mirror_psf, int filter_length, float shift) 
+const void filter_generation(float *mirror_psf, int filter_length, float shift)
 {
 #define FILTER_EXTENT 14
 #define PI 3.141592653589793
@@ -69,33 +69,26 @@ const void filter_generation(float *mirror_psf, int filter_length, float shift)
 		}
 	}
 	else {
-
+		for (int t = -filter_length; t <= filter_length; ++t) {
+			if (filter_length == 0)
+				mirror_psf[t] = 1;
+			else
+				mirror_psf[t] = sinf(0.4 * PI * (t - shift)) / (0.4 * PI * (t - shift)) \
+				* 0.5 * (1 + cosf(PI * (t - shift - filter_length) / (filter_length + 0.5)));
+		}
 	}
 
-	for (int t = -filter_length; t <= filter_length; ++t) {
-		mirror_psf[t] = sinf(0.4 * PI * (t - .5)) / (0.4 * PI * (t - .5)) \
-			* 0.5 * (1 - cosf(2 * PI * (t - .5 - filter_length) / (2 * filter_length)));
-		if (filter_length == 0)
-			mirror_psf[t] = 1;
-		if (t == 0)
-			mirror_psf[t] = 1;
-		else if (t > 0)
-			mirror_psf[t] = mirror_psf[-t];
-		else
-			mirror_psf[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
-			* 0.5 * (1 - cosf(2 * PI * (t - filter_length) / (2 * filter_length)));
-	}
+	if (filter_length != 0) {
+		float gain;
+		for (int t = -filter_length; t <= filter_length; t++) {
+			gain += mirror_psf[t];
+		}
 
-	float gain;
-	for (int t = -filter_length; t <= filter_length; t++) {
-		gain+= mirror_psf[t];
+		gain = 1 / gain;
+		for (int t = -filter_length; t <= filter_length; t++) {
+			mirror_psf[t] = mirror_psf[t] * gain;
+		}
 	}
-
-	gain = 1 / gain;
-	for (int t = -filter_length; t <= filter_length; t++) {
-		mirror_psf[t] = mirror_psf[t] * gain;
-	}
-
 }
 
 /*****************************************************************************/
@@ -109,56 +102,46 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 
 
 	// Create the vertical filter PSF as a local array on the stack.
-	float filter_buf[FILTER_TAPS];
+	float filter_buf_1[FILTER_TAPS];
 	float filter_buf_2[FILTER_TAPS];
+	float filter_buf_3[FILTER_TAPS];
+	float filter_buf_4[FILTER_TAPS];
+	float filter_buf_5[FILTER_TAPS];
 
 	for (int i = 0; i < FILTER_TAPS; ++i) {
-		filter_buf[i] = 0.0F;
+		filter_buf_1[i] = 0.0F;
 		filter_buf_2[i] = 0.0F;
+		filter_buf_3[i] = 0.0F;
+		filter_buf_4[i] = 0.0F;
+		filter_buf_5[i] = 0.0F;
 	}
 
-	float *mirror_kernal_1 = filter_buf + FILTER_EXTENT;
+	float *mirror_kernal_1 = filter_buf_1 + FILTER_EXTENT;
 	float *mirror_kernal_2 = filter_buf_2 + FILTER_EXTENT;
+	float *mirror_kernal_3 = filter_buf_3 + FILTER_EXTENT;
+	float *mirror_kernal_4 = filter_buf_4 + FILTER_EXTENT;
+	float *mirror_kernal_5 = filter_buf_5 + FILTER_EXTENT;
 
-	// `mirror_kernal_1' points to the central tap in the filter
-	for (int t = -filter_length; t <= filter_length; ++t) {
-		mirror_kernal_2[t] = sinf(0.4 * PI * (t - .5)) / (0.4 * PI * (t - .5)) \
-			* 0.5 * (1 - cosf(2 * PI * (t - .5 - filter_length) / (2 * filter_length)));
-		if (filter_length == 0)
-			mirror_kernal_2[t] = 1;
-		if (t == 0)
-			mirror_kernal_1[t] = 1;
-		else if (t > 0)
-			mirror_kernal_1[t] = mirror_kernal_1[-t];
-		else
-			mirror_kernal_1[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
-				* 0.5 * (1 - cosf(2 * PI * (t - filter_length) / (2 * filter_length)));
-	}
+	filter_generation(mirror_kernal_1, filter_length, 0);
+	filter_generation(mirror_kernal_2, filter_length, 0.4);
+	filter_generation(mirror_kernal_3, filter_length, -0.2);
+	filter_generation(mirror_kernal_4, filter_length, 0.2);
+	filter_generation(mirror_kernal_5, filter_length, -0.4);
 
-	float gain_1, gain_2;
-	for (int t = -filter_length; t <= filter_length; t++) {
-		gain_1 += mirror_kernal_1[t];
-		gain_2 += mirror_kernal_2[t];
-	}
-
-	gain_1 = 1 / gain_1;
-	gain_2 = 1 / gain_2;
-
-	for (int t = -filter_length; t <= filter_length; t++) {
-		mirror_kernal_1[t] = mirror_kernal_1[t] * gain_1;
-		mirror_kernal_2[t] = mirror_kernal_2[t] * gain_2;
-	}
+	float **filter_kernal[5] = 
+			{&mirror_kernal_1, &mirror_kernal_2, &mirror_kernal_3, &mirror_kernal_4, &mirror_kernal_5};
 
 	// Check for consistent dimensions
 	assert(in->border >= FILTER_EXTENT);
 //	assert((this->height <= in->height) && (this->width <= in->width));
 
-/*	float *intermed_handle = new float[in->stride];
-	float *intermed_buf = intermed_handle + in->border;
-*/
+#define verticle_mode 1
+#define horizon_mode 2
+#define numKernals 5
+
 	// Perform the convolution
-	if (mode == 1) {
-		for (int r = 0, e = 0; r < height; r += 2, e += 5) {
+	if (mode == verticle_mode) {
+/*		for (int r = 0, e = 0; r < height; r += 2, e += 5) {
 			if (e > in->height)
 				break;
 			for (int c = 0; c < width; c++)
@@ -172,22 +155,28 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 				*op = sum;
 			}
 		}
-
-		for (int r = 0, e = 0; r < height; r += 2, e += 5) {
-			if (e >  in->height)
+*/
+		for (int r = 0, e = 0; r < height; r += 5, e += 2) {
+			if (e > in->height)
 				break;
 			for (int c = 0; c < width; c++){
-				float *ip = in->buf + (e*in->stride) + c;
-				float *op = buf + r*stride + c;
-				float sum = 0.0F;
-				for (int y = -filter_length; y <= filter_length; y++)
-					sum += ip[y] * mirror_kernal_1[y];
-				*op = sum;
+				for (int w = 0, offset = 0; w < numKernals; ++w) {
+					if (1 < w < 4)
+						offset = 1;
+					else if (w > 3)
+						offset = 2;
+					float *ip = in->buf + ((e + offset)*in->stride) + c;
+					float *op = buf + (r + w)*stride + c;
+					float sum = 0.0F;
+					for (int y = -filter_length; y <= filter_length; y++)
+						sum += ip[y] * *filter_kernal[w][y];
+					*op = sum;
+				}
 			}
 		}
 	}
 
-	if (mode == 2) {
+	if (mode == horizon_mode) {
 		for (int r = 0; r < height; ++r) {
 			for (int c = 0, e = 0; c < width; c += 2, e += 5) {
 				if (e > in->stride)
@@ -303,8 +292,8 @@ main(int argc, char *argv[])
 			new my_aligned_image_comp[num_comps];
 
 		int out_width, out_height;
-		out_width = (int)ceilf(width * 0.4);
-		out_height = (int)ceilf(height * 0.4);
+		out_width = (int)ceilf(width * 2.5);
+		out_height = (int)ceilf(height * 2.5);
 
 		for (n = 0; n < num_comps; n++) {
 			intermediea_comps[n].init(out_height, width, 14);
