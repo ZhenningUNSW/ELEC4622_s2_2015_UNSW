@@ -80,7 +80,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 			mirror_kernal_1[t] = mirror_kernal_1[-t];
 		else
 			mirror_kernal_1[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
-				* 0.5 * (1 + cosf(2 * PI * t / (filter_length + 0.5)));
+				* 0.5 * (1 + cosf(PI * t / (filter_length + 0.5)));
 	}
 
 	float gain_1, gain_2;
