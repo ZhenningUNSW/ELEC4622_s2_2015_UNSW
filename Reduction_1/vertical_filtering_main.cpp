@@ -71,7 +71,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 	// `mirror_kernal_1' points to the central tap in the filter
 	for (int t = -filter_length; t <= filter_length; ++t) {
 		mirror_kernal_2[t] = sinf(0.4 * PI * (t - .5)) / (0.4 * PI * (t - .5)) \
-			* 0.5 * (1 - cosf(2 * PI * (t - .5 - filter_length) / (2 * filter_length)));
+			* 0.5 * (1 + cosf( PI * (t - .5) / (filter_length + 0.5)));
 		if (filter_length == 0)
 			mirror_kernal_2[t] = 1;
 		if (t == 0)
@@ -80,7 +80,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 			mirror_kernal_1[t] = mirror_kernal_1[-t];
 		else
 			mirror_kernal_1[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
-				* 0.5 * (1 - cosf(2 * PI * (t - filter_length) / (2 * filter_length)));
+				* 0.5 * (1 + cosf(2 * PI * t / (filter_length + 0.5)));
 	}
 
 	float gain_1, gain_2;
@@ -115,8 +115,8 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 				float *op = buf + (r + 1)*stride + c;
 				float sum = 0.0F;
 				for (int y = -filter_length; y <= filter_length; ++y)
-					//sum += ip[y] * mirror_kernal_2[y];
-					sum += ip[y] * mirror_kernal_1[y];
+					sum += ip[y] * mirror_kernal_2[y];
+					//sum += ip[y] * mirror_kernal_1[y];
 				*op = sum;
 			}
 		}
@@ -155,8 +155,8 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 				float *op = buf + r*stride + c + 1;
 				float sum = 0.0F;
 				for (int y = -filter_length ; y <= filter_length; y++)
-					//sum += ip[y] * mirror_kernal_2[y];
-					sum += ip[y] * mirror_kernal_1[y];
+					sum += ip[y] * mirror_kernal_2[y];
+					//sum += ip[y] * mirror_kernal_1[y];
 				*op = sum;
 			}
 		}
