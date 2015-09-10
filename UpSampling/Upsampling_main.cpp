@@ -47,6 +47,58 @@ void my_aligned_image_comp::perform_boundary_extension()
 }
 
 /*****************************************************************************/
+/*                        filter coefficient generation                      */
+/*****************************************************************************/
+
+const void filter_generation(float *mirror_psf, int filter_length, float shift) 
+{
+#define FILTER_EXTENT 14
+#define PI 3.141592653589793
+	assert((2 * filter_length + 1) > FILTER_EXTENT);
+	assert(abs(shift) > 0.5);
+
+	if (shift == 0) {
+		for (int t = -filter_length; t <= filter_length; ++t) {
+			if (t == 0)
+				mirror_psf[t] = 1;
+			else if (t > 0)
+				mirror_psf[t] = mirror_psf[-t];
+			else
+				mirror_psf[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
+				* 0.5 * (1 + cosf(2 * PI * t / (filter_length + 0.5)));
+		}
+	}
+	else {
+
+	}
+
+	for (int t = -filter_length; t <= filter_length; ++t) {
+		mirror_psf[t] = sinf(0.4 * PI * (t - .5)) / (0.4 * PI * (t - .5)) \
+			* 0.5 * (1 - cosf(2 * PI * (t - .5 - filter_length) / (2 * filter_length)));
+		if (filter_length == 0)
+			mirror_psf[t] = 1;
+		if (t == 0)
+			mirror_psf[t] = 1;
+		else if (t > 0)
+			mirror_psf[t] = mirror_psf[-t];
+		else
+			mirror_psf[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
+			* 0.5 * (1 - cosf(2 * PI * (t - filter_length) / (2 * filter_length)));
+	}
+
+	float gain;
+	for (int t = -filter_length; t <= filter_length; t++) {
+		gain+= mirror_psf[t];
+	}
+
+	gain = 1 / gain;
+	for (int t = -filter_length; t <= filter_length; t++) {
+		mirror_psf[t] = mirror_psf[t] * gain;
+	}
+
+}
+
+/*****************************************************************************/
 /*                        my_aligned_image_comp::filter                      */
 /*****************************************************************************/
 
@@ -54,7 +106,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 {
 #define FILTER_EXTENT 14
 #define FILTER_TAPS 2*FILTER_EXTENT+1
-#define PI 3.141592653589793
+
 
 	// Create the vertical filter PSF as a local array on the stack.
 	float filter_buf[FILTER_TAPS];
