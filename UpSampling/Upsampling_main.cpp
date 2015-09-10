@@ -102,11 +102,11 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 
 
 	// Create the vertical filter PSF as a local array on the stack.
-	float filter_buf_1[FILTER_TAPS];
-	float filter_buf_2[FILTER_TAPS];
-	float filter_buf_3[FILTER_TAPS];
-	float filter_buf_4[FILTER_TAPS];
-	float filter_buf_5[FILTER_TAPS];
+	float *filter_buf_1 = new float[FILTER_TAPS];
+	float *filter_buf_2 = new float[FILTER_TAPS];
+	float *filter_buf_3 = new float[FILTER_TAPS];
+	float *filter_buf_4 = new float[FILTER_TAPS];
+	float *filter_buf_5 = new float[FILTER_TAPS];
 
 	for (int i = 0; i < FILTER_TAPS; ++i) {
 		filter_buf_1[i] = 0.0F;
@@ -132,7 +132,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 			{&mirror_kernal_1, &mirror_kernal_2, &mirror_kernal_3, &mirror_kernal_4, &mirror_kernal_5};
 
 	// Check for consistent dimensions
-	assert(in->border >= FILTER_EXTENT);
+	assert(in->border > FILTER_EXTENT);
 //	assert((this->height <= in->height) && (this->width <= in->width));
 
 #define verticle_mode 1
@@ -159,11 +159,13 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 		for (int r = 0, e = 0; r < height; r += 5, e += 2) {
 			if (e > in->height)
 				break;
-			for (int c = 0; c < width; c++){
+			for (int c = 0; c < in->width; c++){
 				for (int w = 0, offset = 0; w < numKernals; ++w) {
-					if (1 < w < 4)
+					if (r + w >  height - 1)
+						break;
+					if ((w == 2)||(w == 3))
 						offset = 1;
-					else if (w > 3)
+					else if (w == 4)
 						offset = 2;
 					float *ip = in->buf + ((e + offset)*in->stride) + c;
 					float *op = buf + (r + w)*stride + c;
@@ -177,19 +179,27 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 	}
 
 	if (mode == horizon_mode) {
-		for (int r = 0; r < height; ++r) {
-			for (int c = 0, e = 0; c < width; c += 2, e += 5) {
+
+		for (int r = 0; r < in->height; ++r) {
+			for (int c = 0, e = 0; c < width; c += 5, e += 2) {
 				if (e > in->stride)
 					break;
-				float *ip = in->buf + r*in->stride + e ;
-				float *op = buf + r*stride + c;
-				float sum = 0.0F;
-				for (int y = -filter_length; y <= filter_length; y++)
-					sum += ip[y] * mirror_kernal_1[y];
-				*op = sum;
+				for (int w = 0, offset = 0; w < numKernals; ++w) {
+					if (w + c > width -1)
+						break;
+					if ((w == 2) || (w == 3))
+						offset = 1;
+					else if (w == 4)
+						offset = 2;
+					float *ip = in->buf + r*in->stride + e + offset;
+					float *op = buf + r*stride + c + w;
+					float sum = 0.0F;
+					for (int y = -filter_length; y <= filter_length; y++)
+						sum += ip[y] * *filter_kernal[w][y];
+					*op = sum;
+				}
 			}
-
-			for (int c = 0, e = 0; c < width; c += 2, e += 5) {
+/*			for (int c = 0, e = 0; c < width; c += 2, e += 5) {
 				if (e > in->stride)
 					break;
 				float *ip = in->buf + r*in->stride + e + 2;
@@ -200,33 +210,14 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 					sum += ip[y] * mirror_kernal_1[y];
 				*op = sum;
 			}
-		}
-	}
-/*
-
-	//Create a single line buffer and copy the value form the intermediate result
-	for (int j = 0; j < this->height; ++j) {
-		for (int i = 0; i < this->width; ++i)
-			intermed_buf[i] = this->buf[j * this->stride + i];
-
-		//Perform boundry extension with mirror padding
-		for (int i = 0; i < in->border; ++i) {
-			intermed_buf[-i - 1] = intermed_buf[i];
-			intermed_buf[i + this->width] = intermed_buf[-i + this->width - 1];
-		}
-
-		//Perform convolution
-		for (int c = 0; c < width; c++)
-		{
-			//float *ip = in->buf + r*in->stride + c;
-			float *op = this->buf + j*stride + c;
-			float sum = 0.0F;
-			for (int y = -FILTER_EXTENT; y <= FILTER_EXTENT; y++)
-				sum += intermed_buf[c + y] * mirror_kernal_1[y];
-			*op = sum;
-		}
-	}
 */
+		}
+	}
+	delete[] filter_buf_1;
+	delete[] filter_buf_2;
+	delete[] filter_buf_3;
+	delete[] filter_buf_4;
+	delete[] filter_buf_5;
 }
 
 
@@ -324,6 +315,8 @@ main(int argc, char *argv[])
 				output_comps[n].vector_filter(input_comps + n);
 #endif
 		}
+		delete[] intermediea_comps;
+		delete[] input_comps;
 		printf("Filtering end!\r\n");
 
 		
@@ -359,8 +352,11 @@ main(int argc, char *argv[])
 		}
 		bmp_out__close(&out);
 		delete[] line;
-		delete[] input_comps;
+		
+		
 		delete[] output_comps;
+		
+		
 
 		clock_t end_time = clock();
 		float elaps = ((float)(end_time - start_time)) / CLOCKS_PER_SEC;
