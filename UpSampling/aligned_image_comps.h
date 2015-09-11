@@ -52,7 +52,7 @@ struct my_aligned_image_comp {
     void vector_filter(my_aligned_image_comp *in);
        /* Vector implementation of vertical filtering, using X86 processor
           intrinsics.  This function is implemented in "vector_filter.cpp". */
-	
+	void filter_generation(float *mirror_psf, int filter_length, float shift);
   };
   /* Notes:
        This class is the same as `my_image_comp' from the "filtering_example"

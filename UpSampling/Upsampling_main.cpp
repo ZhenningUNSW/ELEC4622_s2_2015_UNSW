@@ -50,7 +50,7 @@ void my_aligned_image_comp::perform_boundary_extension()
 /*                        filter coefficient generation                      */
 /*****************************************************************************/
 
-const void filter_generation(float *mirror_psf, int filter_length, float shift)
+void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_length, float shift)
 {
 #define FILTER_EXTENT 14
 #define PI 3.141592653589793
@@ -64,8 +64,8 @@ const void filter_generation(float *mirror_psf, int filter_length, float shift)
 			else if (t > 0)
 				mirror_psf[t] = mirror_psf[-t];
 			else
-				mirror_psf[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
-				* 0.5 * (1 + cosf(2 * PI * t / (filter_length + 0.5)));
+				mirror_psf[t] = sinf(PI * t) / (PI * t) \
+				* 0.5 * (1 + cosf(PI * t / (filter_length + 0.5)));
 		}
 	}
 	else {
@@ -73,13 +73,13 @@ const void filter_generation(float *mirror_psf, int filter_length, float shift)
 			if (filter_length == 0)
 				mirror_psf[t] = 1;
 			else
-				mirror_psf[t] = sinf(0.4 * PI * (t - shift)) / (0.4 * PI * (t - shift)) \
-				* 0.5 * (1 + cosf(PI * (t - shift - filter_length) / (filter_length + 0.5)));
+				mirror_psf[t] = sinf(PI * (t - shift)) / (PI * (t - shift)) \
+				* 0.5 * (1 + cosf(PI * (t - shift) / (filter_length + 0.5)));
 		}
 	}
 
 	if (filter_length != 0) {
-		float gain;
+		float gain = 0;
 		for (int t = -filter_length; t <= filter_length; t++) {
 			gain += mirror_psf[t];
 		}
@@ -128,8 +128,15 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 	filter_generation(mirror_kernal_4, filter_length, 0.2);
 	filter_generation(mirror_kernal_5, filter_length, -0.4);
 
-	float **filter_kernal[5] = 
-			{&mirror_kernal_1, &mirror_kernal_2, &mirror_kernal_3, &mirror_kernal_4, &mirror_kernal_5};
+/*	for (int t = -filter_length; t < filter_length; ++t)
+		printf("t = %d, 1:%f;2:%f;3:%f;4:%f;5:%f\n", t, mirror_kernal_1[t],
+			mirror_kernal_2[t], mirror_kernal_3[t], mirror_kernal_4[t],
+			mirror_kernal_5 [t]
+			);
+*/
+	float *filter_kernal[5] =
+			{mirror_kernal_1, mirror_kernal_2, mirror_kernal_3, mirror_kernal_4, mirror_kernal_5};
+
 
 	// Check for consistent dimensions
 	assert(in->border > FILTER_EXTENT);
@@ -141,37 +148,21 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 
 	// Perform the convolution
 	if (mode == verticle_mode) {
-/*		for (int r = 0, e = 0; r < height; r += 2, e += 5) {
-			if (e > in->height)
-				break;
-			for (int c = 0; c < width; c++)
-			{
-				float *ip = in->buf + ((e + 2)*in->stride) + c;
-				float *op = buf + (r + 1)*stride + c;
-				float sum = 0.0F;
-				for (int y = -filter_length; y <= filter_length; ++y)
-					//sum += ip[y] * mirror_kernal_2[y];
-					sum += ip[y] * mirror_kernal_1[y];
-				*op = sum;
-			}
-		}
-*/
 		for (int r = 0, e = 0; r < height; r += 5, e += 2) {
-			if (e > in->height)
-				break;
 			for (int c = 0; c < in->width; c++){
 				for (int w = 0, offset = 0; w < numKernals; ++w) {
-					if (r + w >  height - 1)
+					if (r + w >  height )
 						break;
 					if ((w == 2)||(w == 3))
 						offset = 1;
 					else if (w == 4)
 						offset = 2;
 					float *ip = in->buf + ((e + offset)*in->stride) + c;
-					float *op = buf + (r + w)*stride + c;
+					float *op = this->buf + (r + w)*stride + c;
 					float sum = 0.0F;
-					for (int y = -filter_length; y <= filter_length; y++)
-						sum += ip[y] * *filter_kernal[w][y];
+					for (int y = -filter_length; y <= filter_length; ++y) {
+						sum += ip[y] * filter_kernal[w][y];
+					}
 					*op = sum;
 				}
 			}
@@ -182,10 +173,8 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 
 		for (int r = 0; r < in->height; ++r) {
 			for (int c = 0, e = 0; c < width; c += 5, e += 2) {
-				if (e > in->stride)
-					break;
 				for (int w = 0, offset = 0; w < numKernals; ++w) {
-					if (w + c > width -1)
+					if (w + c > width)
 						break;
 					if ((w == 2) || (w == 3))
 						offset = 1;
@@ -195,7 +184,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 					float *op = buf + r*stride + c + w;
 					float sum = 0.0F;
 					for (int y = -filter_length; y <= filter_length; y++)
-						sum += ip[y] * *filter_kernal[w][y];
+						sum += ip[y] * filter_kernal[w][y];
 					*op = sum;
 				}
 			}
@@ -297,6 +286,7 @@ main(int argc, char *argv[])
 			intermediea_comps[n].perform_boundary_extension();
 		}
 
+
 		printf("Start filtering!\r\n");
 
 #define verticle_mode 1
@@ -350,17 +340,18 @@ main(int argc, char *argv[])
 			}
 			bmp_out__put_line(&out, line);
 		}
+		
 		bmp_out__close(&out);
-		delete[] line;
-		
-		
+
+		delete[] line;		
 		delete[] output_comps;
 		
 		
 
 		clock_t end_time = clock();
 		float elaps = ((float)(end_time - start_time)) / CLOCKS_PER_SEC;
-		printf_s("The runtime is %f seconds!\n\r", elaps);
+		printf_s("The runtime is %f seconds!\n\r", elaps);		
+
 
 	}
 	catch (int exc) {
