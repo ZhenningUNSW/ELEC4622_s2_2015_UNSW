@@ -53,7 +53,7 @@ void my_aligned_image_comp::perform_boundary_extension()
 void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_length, float shift)
 {
 #define FILTER_EXTENT 14
-#define PI 3.141592653589793
+#define PI 3.141592653589793F
 	assert((2 * filter_length + 1) > FILTER_EXTENT);
 	assert(abs(shift) > 0.5);
 
@@ -65,7 +65,7 @@ void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_leng
 				mirror_psf[t] = mirror_psf[-t];
 			else
 				mirror_psf[t] = sinf(PI * t) / (PI * t) \
-				* 0.5 * (1 + cosf(PI * t / (filter_length + 0.5)));
+				* 0.5F * (1.0F + cosf(PI * t / (filter_length + 0.5F)));
 		}
 	}
 	else {
@@ -74,7 +74,7 @@ void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_leng
 				mirror_psf[t] = 1;
 			else
 				mirror_psf[t] = sinf(PI * (t - shift)) / (PI * (t - shift)) \
-				* 0.5 * (1 + cosf(PI * (t - shift) / (filter_length + 0.5)));
+				* 0.5F * (1 + cosf(PI * (t - shift) / (filter_length + 0.5F)));
 		}
 	}
 
@@ -123,10 +123,10 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 	float *mirror_kernal_5 = filter_buf_5 + FILTER_EXTENT;
 
 	filter_generation(mirror_kernal_1, filter_length, 0);
-	filter_generation(mirror_kernal_2, filter_length, 0.4);
-	filter_generation(mirror_kernal_3, filter_length, -0.2);
-	filter_generation(mirror_kernal_4, filter_length, 0.2);
-	filter_generation(mirror_kernal_5, filter_length, -0.4);
+	filter_generation(mirror_kernal_2, filter_length, 0.4F);
+	filter_generation(mirror_kernal_3, filter_length, -0.2F);
+	filter_generation(mirror_kernal_4, filter_length, 0.2F);
+	filter_generation(mirror_kernal_5, filter_length, -0.4F);
 
 /*	for (int t = -filter_length; t < filter_length; ++t)
 		printf("t = %d, 1:%f;2:%f;3:%f;4:%f;5:%f\n", t, mirror_kernal_1[t],
@@ -188,18 +188,6 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 					*op = sum;
 				}
 			}
-/*			for (int c = 0, e = 0; c < width; c += 2, e += 5) {
-				if (e > in->stride)
-					break;
-				float *ip = in->buf + r*in->stride + e + 2;
-				float *op = buf + r*stride + c + 1;
-				float sum = 0.0F;
-				for (int y = -filter_length ; y <= filter_length; y++)
-					//sum += ip[y] * mirror_kernal_2[y];
-					sum += ip[y] * mirror_kernal_1[y];
-				*op = sum;
-			}
-*/
 		}
 	}
 	delete[] filter_buf_1;
@@ -262,7 +250,7 @@ main(int argc, char *argv[])
 						  // converted to floats without any loss of information.
 			}
 		}
-
+		delete[] line;
 		bmp_in__close(&in);
 
 		// Allocate storage for the filtered output
@@ -272,8 +260,8 @@ main(int argc, char *argv[])
 			new my_aligned_image_comp[num_comps];
 
 		int out_width, out_height;
-		out_width = (int)ceilf(width * 2.5);
-		out_height = (int)ceilf(height * 2.5);
+		out_width = (int)ceilf(width * 2.5F);
+		out_height = (int)ceilf(height * 2.5F);
 
 		for (n = 0; n < num_comps; n++) {
 			intermediea_comps[n].init(out_height, width, 14);
@@ -295,7 +283,8 @@ main(int argc, char *argv[])
 #if 1
 			for (n = 0; n < num_comps; n++)
 				intermediea_comps[n].filter(input_comps + n, filter_tap, verticle_mode);
-			
+
+			delete[] input_comps;
 			for (n = 0; n < num_comps; n++) {	
 				intermediea_comps[n].perform_boundary_extension();
 				output_comps[n].filter(intermediea_comps + n, filter_tap, horizon_mode);
@@ -306,7 +295,6 @@ main(int argc, char *argv[])
 #endif
 		}
 		delete[] intermediea_comps;
-		delete[] input_comps;
 		printf("Filtering end!\r\n");
 
 		
@@ -314,12 +302,15 @@ main(int argc, char *argv[])
 		bmp_out out;
 		if ((err_code = bmp_out__open(&out, argv[2], out_width, out_height, num_comps)) != 0)
 			throw err_code;
+
+		io_byte *out_line = new io_byte[out_width*num_comps];
+
 		for (r = out_height - 1; r >= 0; r--)
 		{ // "r" holds the true row index we are writing, since the image is
 		  // written upside down in BMP files.
 			for (n = 0; n < num_comps; n++)
 			{
-				io_byte *dst = line + n; // Points to first sample of component n
+				io_byte *dst = out_line + n; // Points to first sample of component n
 				float *src = output_comps[n].buf + r * output_comps[n].stride;
 				for (int c = 0; c < out_width; c++, dst += num_comps) {
 					if (src[c] > 255) {
@@ -338,19 +329,19 @@ main(int argc, char *argv[])
 // There is in fact not the best way to do the
 // conversion. You should fix it up in the lab.
 			}
-			bmp_out__put_line(&out, line);
-		}
+			bmp_out__put_line(&out, out_line);
+		}	
+		
 		
 		bmp_out__close(&out);
-
-		delete[] line;		
+		delete[] out_line;		
 		delete[] output_comps;
-		
-		
-
 		clock_t end_time = clock();
 		float elaps = ((float)(end_time - start_time)) / CLOCKS_PER_SEC;
-		printf_s("The runtime is %f seconds!\n\r", elaps);		
+		printf_s("The runtime is %f seconds!\n\r", elaps);
+		
+
+
 
 
 	}
