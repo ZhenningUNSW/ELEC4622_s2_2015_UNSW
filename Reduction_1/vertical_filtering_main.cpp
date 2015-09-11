@@ -54,7 +54,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 {
 #define FILTER_EXTENT 14
 #define FILTER_TAPS 2*FILTER_EXTENT+1
-#define PI 3.141592653589793
+#define PI 3.141592653589793F
 
 	// Create the vertical filter PSF as a local array on the stack.
 	float filter_buf[FILTER_TAPS];
@@ -70,8 +70,8 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 
 	// `mirror_kernal_1' points to the central tap in the filter
 	for (int t = -filter_length; t <= filter_length; ++t) {
-		mirror_kernal_2[t] = sinf(0.4 * PI * (t - .5)) / (0.4 * PI * (t - .5)) \
-			* 0.5 * (1 + cosf( PI * (t - .5) / (filter_length + 0.5)));
+		mirror_kernal_2[t] = sinf(0.4F * PI * (t - .5F)) / (0.4F * PI * (t - .5F)) \
+			* 0.5F * (1 + cosf( PI * (t - .5F) / (filter_length + 0.5F)));
 		if (filter_length == 0)
 			mirror_kernal_2[t] = 1;
 		if (t == 0)
@@ -79,11 +79,11 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 		else if (t > 0)
 			mirror_kernal_1[t] = mirror_kernal_1[-t];
 		else
-			mirror_kernal_1[t] = sinf(0.4 * PI * t) / (0.4 * PI * t) \
-				* 0.5 * (1 + cosf(PI * t / (filter_length + 0.5)));
+			mirror_kernal_1[t] = sinf(0.4F * PI * t) / (0.4F * PI * t) \
+				* 0.5F * (1 + cosf(PI * t / (filter_length + 0.5F)));
 	}
 
-	float gain_1, gain_2;
+	float gain_1 = 0, gain_2 = 0;
 	for (int t = -filter_length; t <= filter_length; t++) {
 		gain_1 += mirror_kernal_1[t];
 		gain_2 += mirror_kernal_2[t];
@@ -251,8 +251,8 @@ main(int argc, char *argv[])
 			new my_aligned_image_comp[num_comps];
 
 		int out_width, out_height;
-		out_width = (int)ceilf(width * 0.4);
-		out_height = (int)ceilf(height * 0.4);
+		out_width = (int)ceilf(width * 0.4F);
+		out_height = (int)ceilf(height * 0.4F);
 
 		for (n = 0; n < num_comps; n++) {
 			intermediea_comps[n].init(out_height, width, 14);
