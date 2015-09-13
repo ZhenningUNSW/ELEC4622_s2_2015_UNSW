@@ -59,12 +59,12 @@ void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_leng
 	if (shift == 0)
 		mirror_psf[0] = 1;
 	else if (shift < 0) {
-		mirror_psf[0] = (1 - shift);
-		mirror_psf[1] = shift;
+		mirror_psf[0] = (1 + shift);
+		mirror_psf[-1] = -shift;
 	}
 	else {
 		mirror_psf[0] = (1 - shift);
-		mirror_psf[-1] = shift;
+		mirror_psf[1] = shift;
 	}	
 }
 
