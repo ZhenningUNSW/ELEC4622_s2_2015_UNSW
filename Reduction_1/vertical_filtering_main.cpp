@@ -72,7 +72,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 	for (int t = -filter_length; t <= filter_length; ++t) {
 		mirror_kernal_2[t] = sinf(0.4F * PI * (t - .5F)) / (0.4F * PI * (t - .5F)) \
 			* 0.5F * (1 + cosf( PI * (t - .5F) / (filter_length + 0.5F)));
-		printf("%f\n",mirror_kernal_2[t]);
+
 		if (filter_length == 0)
 			mirror_kernal_2[t] = 1;
 		if (t == 0)
