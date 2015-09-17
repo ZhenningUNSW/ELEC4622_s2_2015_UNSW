@@ -64,7 +64,7 @@ void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_leng
 			else if (t > 0)
 				mirror_psf[t] = mirror_psf[-t];
 			else
-				mirror_psf[t] = sinf(PI * t) / (PI * t) \
+				mirror_psf[t] = sinf(PI *t) / (PI *t) \
 				* 0.5F * (1.0F + cosf(PI * t / (filter_length + 0.5F)));
 		}
 	}
@@ -260,8 +260,8 @@ main(int argc, char *argv[])
 			new my_aligned_image_comp[num_comps];
 
 		int out_width, out_height;
-		out_width = (int)ceilf(width * 2.5F);
-		out_height = (int)ceilf(height * 2.5F);
+		out_width = (int)floorf(width * 2.5F);
+		out_height = (int)floorf(height * 2.5F);
 
 		for (n = 0; n < num_comps; n++) {
 			intermediea_comps[n].init(out_height, width, 14);

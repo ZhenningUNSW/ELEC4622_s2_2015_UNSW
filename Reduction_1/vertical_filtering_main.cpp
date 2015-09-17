@@ -70,17 +70,17 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 
 	// `mirror_kernal_1' points to the central tap in the filter
 	for (int t = -filter_length; t <= filter_length; ++t) {
-		mirror_kernal_2[t] = sinf(0.4F * PI * (t - .5F)) / (0.4F * PI * (t - .5F)) \
+		mirror_kernal_2[t] = 0.16f*sinf( 0.4 *PI * ( t - .5F)) / (0.4 *PI *  (t - .5F)) \
 			* 0.5F * (1 + cosf( PI * (t - .5F) / (filter_length + 0.5F)));
 
 		if (filter_length == 0)
 			mirror_kernal_2[t] = 1;
 		if (t == 0)
-			mirror_kernal_1[t] = 1;
+			mirror_kernal_1[t] = 0.16f * 1;
 		else if (t > 0)
 			mirror_kernal_1[t] = mirror_kernal_1[-t];
 		else
-			mirror_kernal_1[t] = sinf(0.4F * PI * t) / (0.4F * PI * t) \
+			mirror_kernal_1[t] = 0.16f*sinf(0.4 *PI * t) / (PI * t) \
 				* 0.5F * (1 + cosf(PI * t / (filter_length + 0.5F)));
 	}
 
