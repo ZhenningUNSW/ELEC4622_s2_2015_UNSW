@@ -138,7 +138,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 					float *op = this->buf + (r + w)*stride + c;
 					float sum = 0.0F;
 					for (int y = -filter_length; y <= filter_length; ++y) {
-						sum += ip[y] * filter_kernal[w][y];
+						sum += ip[y*in->stride] * filter_kernal[w][y];
 					}
 					*op = sum;
 				}

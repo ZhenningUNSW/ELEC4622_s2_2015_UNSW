@@ -21,8 +21,8 @@ void compute_difference(my_aligned_image_comp *in1, my_aligned_image_comp *in2, 
 	height = in1->height;
 	float sum_diff = 0.0f;
 	float mse = 0.0f;
-	for (int i = 0; i < width; ++i)
-		for (int j = 0; j < height; ++j) {
+	for (int j = 0; j < height; ++j)
+		for (int i = 0; i < width; ++i){
 			float *source_1 = in1->buf + j * in1->width + i;
 			float *source_2 = in2->buf + j * in2->width + i;
 			float *dest = out->buf + j * width + i;

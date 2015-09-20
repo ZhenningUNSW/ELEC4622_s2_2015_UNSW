@@ -161,7 +161,7 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 					float *op = this->buf + (r + w)*stride + c;
 					float sum = 0.0F;
 					for (int y = -filter_length; y <= filter_length; ++y) {
-						sum += ip[y] * filter_kernal[w][y];
+						sum += ip[y*in->stride] * filter_kernal[w][y];
 					}
 					*op = sum;
 				}
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 		my_aligned_image_comp *input_comps =
 			new my_aligned_image_comp[num_comps];
 		for (n = 0; n < num_comps; n++)
-			input_comps[n].init(height, width, 14); // Leave a border of 4
+			input_comps[n].init(height, width, 15); // Leave a border of 4
 
 		int r; // Declare row index
 		io_byte *line = new io_byte[width*num_comps];
