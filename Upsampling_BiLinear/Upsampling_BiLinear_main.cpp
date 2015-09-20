@@ -52,8 +52,7 @@ void my_aligned_image_comp::perform_boundary_extension()
 
 void my_aligned_image_comp::filter_generation(float *mirror_psf, int filter_length, float shift)
 {
-#define FILTER_EXTENT 14
-	assert((2 * filter_length + 1) > FILTER_EXTENT);
+
 	assert(abs(shift) > 1);
 
 	if (shift == 0)
@@ -147,7 +146,6 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length,
 	}
 
 	if (mode == horizon_mode) {
-
 		for (int r = 0; r < in->height; ++r) {
 			for (int c = 0, e = 0; c < width; c += 5, e += 2) {
 				for (int w = 0, offset = 0; w < numKernals; ++w) {

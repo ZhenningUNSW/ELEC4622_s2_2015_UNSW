@@ -19,28 +19,28 @@ void compute_difference(my_aligned_image_comp *in1, my_aligned_image_comp *in2, 
 	int width, height;
 	width = in1->width;
 	height = in1->height;
-	float sum_diff = 0.0f;
-	float mse = 0.0f;
+	double sum_diff = 0.0f;
+	double mse = 0.0f;
 	for (int j = 0; j < height; ++j)
 		for (int i = 0; i < width; ++i){
 			float *source_1 = in1->buf + j * in1->width + i;
 			float *source_2 = in2->buf + j * in2->width + i;
 			float *dest = out->buf + j * width + i;
-			float temp = *source_1 - *source_2;
+			double temp = *source_1 - *source_2;
 			*dest = 0.5f * temp;
 			sum_diff += temp;
 			temp *= temp;
 			mse += temp;
 		}
 
-	float rip_width = 1.0f / width;
-	float rip_height = 1.0f / height;
+	double rip_width = 1.0f / width;
+	double rip_height = 1.0f / height;
 	sum_diff *= rip_width;
 	sum_diff *= rip_height;
 	mse *= rip_width;
 	mse *= rip_height;
 	
-	float PSNR = 0.0f;
+	double PSNR = 0.0f;
 	PSNR = 10.0f * log10f(255.0f * 255.0f / mse);
 	printf("The Mean Error is %f \n The MSE is %f \n The PSNR is %f dB\n\r", sum_diff, mse, PSNR);
 

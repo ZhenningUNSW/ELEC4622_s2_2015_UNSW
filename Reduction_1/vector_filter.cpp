@@ -7,6 +7,7 @@
 /*****************************************************************************/
 #include <smmintrin.h>//SSE4.1(include tmmintrin.h)
 #include <emmintrin.h> // Include SSE2 processor intrinsic functions
+#include <immintrin.h>// include avx
 #include <stdlib.h>
 #include "aligned_image_comps.h"
 
