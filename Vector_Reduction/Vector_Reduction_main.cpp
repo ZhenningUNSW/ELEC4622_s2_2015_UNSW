@@ -24,20 +24,20 @@ void my_aligned_image_comp::perform_boundary_extension()
 	int r, c;
 
 	// First extend upwards
-	int *first_line = buf;
+	__int32 *first_line = buf;
 	for (r = 1; r <= border; r++)
 		for (c = 0; c < width; c++)
 			first_line[-r*stride + c] = first_line[c];
 
 	// Now extend downwards
-	int *last_line = buf + (height - 1)*stride;
+	__int32 *last_line = buf + (height - 1)*stride;
 	for (r = 1; r <= border; r++)
 		for (c = 0; c < width; c++)
 			last_line[r*stride + c] = last_line[c];
 
 	// Now extend all rows to the left and to the right
-	int *left_edge = buf - border*stride;
-	int *right_edge = left_edge + width - 1;
+	__int32 *left_edge = buf - border*stride;
+	__int32 *right_edge = left_edge + width - 1;
 	for (r = height + 2 * border; r > 0; r--, left_edge += stride, right_edge += stride)
 		for (c = 1; c <= border; c++)
 		{
@@ -54,22 +54,22 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length)
 {
 #define FILTER_EXTENT 14
 #define FILTER_TAPS (2*FILTER_EXTENT+1)
-	int shifted_filter_cof[FILTER_TAPS] = { 0, -9,	0,	88,	103, -171, -427,
-											0, 886, 763, -1063, -2445,	0,	6438,
-											12221,	12221,	6438,	0, -2445, -1063	,
-											763, 886, 0, -427 ,-171,103,88, 0, -9 };
-	int filter_cof[FILTER_TAPS] = { -2, -12, 37, 124, 0, -347, -321,	461,	
-									1047,	0, -2042, -1835,	2923,	9800,	13102,	
-									9800,	2923, -1835, -2042,	0,	1047,	461, -321, 
-									-347,	0,	124,	37, -12, -2 };
+	__int32 shifted_filter_cof[FILTER_TAPS] = { 0, -9,	0,	88,	103, -171, -427,
+		0, 886, 763, -1063, -2445,	0,	6438,
+		12221,	12221,	6438,	0, -2445, -1063	,
+		763, 886, 0, -427 ,-171,103,88, 0, -9 };
+	__int32 filter_cof[FILTER_TAPS] = { -2, -12, 37, 124, 0, -347, -321,	461,
+		1047,	0, -2042, -1835,	2923,	9800,	13102,
+		9800,	2923, -1835, -2042,	0,	1047,	461, -321,
+		-347,	0,	124,	37, -12, -2 };
 	// Create the vertical filter PSF as a local array on the stack.
-	int filter_buf[FILTER_TAPS];
-	int filter_buf_2[FILTER_TAPS];
+	__int32 filter_buf[FILTER_TAPS];
+	__int32 filter_buf_2[FILTER_TAPS];
 
-	int *mirror_psf = filter_buf + FILTER_EXTENT;
-	int *mirror_psf_2 = filter_buf_2 + FILTER_EXTENT;
-	int *p1 = filter_cof + FILTER_EXTENT;
-	int *p2 = shifted_filter_cof + FILTER_EXTENT;
+	__int32 *mirror_psf = filter_buf + FILTER_EXTENT;
+	__int32 *mirror_psf_2 = filter_buf_2 + FILTER_EXTENT;
+	__int32 *p1 = filter_cof + FILTER_EXTENT;
+	__int32 *p2 = shifted_filter_cof + FILTER_EXTENT;
 	// `mirror_psf' points to the central tap in the filter
 	for (int t = -FILTER_EXTENT; t <= FILTER_EXTENT; t++) {
 		mirror_psf[t] = 0;
@@ -114,9 +114,9 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length)
 	for (int r = 0, e = 0; r < intermedia->height; r += 2, e += 5) {
 		for (int c = 0; c < intermedia->width; c++)
 		{
-			int *ip = in->buf + ((e + 2)*in->stride) + c;
-			int *op = intermedia->buf + (r + 1)*intermedia->stride + c;
-			int sum = 0;
+			__int32 *ip = in->buf + ((e + 2)*in->stride) + c;
+			__int32 *op = intermedia->buf + (r + 1)*intermedia->stride + c;
+			__int32 sum = 0;
 			for (int y = -filter_length; y <= filter_length; ++y)
 				sum += ip[y*in->stride] * mirror_psf_2[y];
 			*op = sum >> 15;
@@ -125,9 +125,9 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length)
 
 	for (int r = 0, e = 0; r < intermedia->height; r += 2, e += 5) {
 		for (int c = 0; c < intermedia->width; c++) {
-			int *ip = in->buf + (e*in->stride) + c;
-			int *op = intermedia->buf + r*intermedia->stride + c;
-			int sum = 0;
+			__int32 *ip = in->buf + (e*in->stride) + c;
+			__int32 *op = intermedia->buf + r*intermedia->stride + c;
+			__int32 sum = 0;
 			for (int y = -filter_length; y <= filter_length; y++)
 				sum += ip[y*in->stride] * mirror_psf[y];
 			*op = sum >> 15;
@@ -138,9 +138,9 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length)
 
 	for (int r = 0; r < this->height; ++r) {
 		for (int c = 0, e = 0; c < this->width; c += 2, e += 5) {
-			int *ip = intermedia->buf + r*intermedia->stride + e;
-			int *op = buf + r*stride + c;
-			int sum = 0;
+			__int32 *ip = intermedia->buf + r*intermedia->stride + e;
+			__int32 *op = buf + r*stride + c;
+			__int32 sum = 0;
 			for (int y = -filter_length; y <= filter_length; y++)
 				sum += ip[y] * mirror_psf[y];
 			*op = sum >> 15;
@@ -149,9 +149,9 @@ void my_aligned_image_comp::filter(my_aligned_image_comp *in, int filter_length)
 
 	for (int r = 0; r < this->height; ++r) {
 		for (int c = 0, e = 0; c < this->width; c += 2, e += 5) {
-			int *ip = intermedia->buf + r*intermedia->stride + e + 2;
-			int *op = buf + r*stride + c + 1;
-			int sum = 0;
+			__int32 *ip = intermedia->buf + r*intermedia->stride + e + 2;
+			__int32 *op = buf + r*stride + c + 1;
+			__int32 sum = 0;
 			for (int y = -filter_length; y <= filter_length; y++)
 				sum += ip[y] * mirror_psf_2[y];
 			*op = sum >> 15;
@@ -206,9 +206,9 @@ main(int argc, char *argv[])
 			for (n = 0; n < num_comps; n++)
 			{
 				io_byte *src = line + n; // Points to first sample of component n
-				int *dst = input_comps[n].buf + r * input_comps[n].stride;
+				__int32 *dst = input_comps[n].buf + r * input_comps[n].stride;
 				for (int c = 0; c < width; c++, src += num_comps)
-					dst[c] = (int)*src; // The cast to type "float" is not
+					dst[c] = (__int32)*src; // The cast to type "float" is not
 						  // strictly required here, since bytes can always be
 						  // converted to floats without any loss of information.
 			}
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
 			for (n = 0; n < num_comps; n++)
 			{
 				io_byte *dst = line + n; // Points to first sample of component n
-				int *src = output_comps[n].buf + r * output_comps[n].stride;
+				__int32 *src = output_comps[n].buf + r * output_comps[n].stride;
 				for (int c = 0; c < out_width; c++, dst += num_comps) {
 					if (src[c] > 255)
 						src[c] = 255;

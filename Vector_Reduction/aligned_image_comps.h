@@ -18,8 +18,8 @@ struct my_aligned_image_comp {
     int height;
     int stride;
     int border; // Extra rows/cols to leave around the boundary
-    int *handle; // Points to start of allocated memory buffer
-    int *buf; // Points to the first real image sample
+    __int32 *handle; // Points to start of allocated memory buffer
+    __int32 *buf; // Points to the first real image sample
     // Function members: (these do not occupy any space in memory)
     my_aligned_image_comp()
       { width = height = stride = border = 0;  handle = buf = NULL; }
@@ -32,7 +32,7 @@ struct my_aligned_image_comp {
         stride = (stride+3) & ~3; // Make stride a multiple of 4 (16 bytes)
         if (handle != NULL)
           delete[] handle; // Delete mem allocated by any previous `init' call
-        handle = new int[stride*(height+2*border)+3]; // Allow for alignment
+        handle = new __int32[stride*(height+2*border)+3]; // Allow for alignment
         buf = handle + (border*stride) + border;
         int existing_alignment = (int)(((__int64) buf) & 15);
         if (existing_alignment != 0)
