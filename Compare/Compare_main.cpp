@@ -259,7 +259,7 @@ main(int argc, char *argv[])
 				float *dst = input1[n].buf + r * input1[n].stride;
 				float *dst2 = input2[n].buf + r * input1[n].stride;
 				
-				for (int c = 0; c < width; c++, src += num_comps) {
+				for (int c = 0; c < width; c++, src += num_comps, src2+=num_comps) {
 					dst[c] = (float)*src;
 					dst2[c] = (float)*src2;
 				}
